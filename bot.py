@@ -44,24 +44,30 @@ async def ping(ctx):
 
 @bot.command(name='corona')
 async def _corona(ctx, *args):
-    country = ""
+    region = ""
     if args:
-        country = args[0]
-        if not corona.does_country_exist(country):
-            await ctx.send(f'Country \'{country}\' does not exist.')
+        region = args[0]
+        if not corona.does_region_exist(region):
+            await ctx.send(f'Region \'{region}\' does not exist.')
             return
     
-    await send_corona_embed(ctx.message.channel, country)
+    await send_corona_embed(ctx.message.channel, region)
 
-async def send_corona_embed(channel, country: str=""):
-    corona_counter = corona.counter_from_country(country)
+async def send_corona_embed(channel, region: str=""):
+    # get counter
+    corona_counter = corona.counter_from_region(region)
+    # counter data
+    cases = f"{corona_counter['cases']:,}".replace(',','.')
+    active = f"{corona_counter['active']:,}".replace(',','.')
+    deaths = f"{corona_counter['deaths']:,}".replace(',','.')
+    recovered = f"{corona_counter['recovered']:,}".replace(',','.')
 
-    region_display = country.capitalize() + '\'s' if country else ''
+    region_display = region.capitalize() + '\'s' if region else ''
 
     embed = discord.Embed(colour = discord.Colour.blue())
-    embed.add_field(name='Total Cases', value=corona_counter.cases)
-    embed.add_field(name='Deaths', value=corona_counter.deaths)
-    embed.add_field(name='Recovered', value=corona_counter.recovered)
+    embed.add_field(name='Total Cases', value=cases)
+    embed.add_field(name='Active Cases', value=active)
+    embed.add_field(name='Deaths', value=deaths)
     embed.set_footer(text=time.strftime("%X %d/%m/%Y") + '\nStay the fuck at home.')
     embed.set_author(name=f"{region_display} COVID-19 Cases",
         icon_url='https://cdn.discordapp.com/attachments/489217124469047316/694153156938170388/CORONAS-23.jpg')
@@ -71,11 +77,12 @@ async def send_corona_embed(channel, country: str=""):
 @tasks.loop(minutes=10)
 async def corona_count():
     # link to corona api
-    corona_counter = corona.counter_from_country()
+    corona_counter = corona.counter_from_region()
 
     # change own status
-    await bot.change_presence(status=discord.Status.dnd, activity=discord.Game("with %s people" % corona_counter.cases))
+    cases = cases = f"{corona_counter['cases']:,}".replace(',','.')
+    await bot.change_presence(status=discord.Status.dnd, activity=discord.Game('with %s people' % cases))
     print('updating status')
 
 
-bot.run('')
+bot.run('Njk0MTM0ODM1ODkxMDExNjY1.XoNKMw.xl0hhGAXEyaaB8CVDBmK86FDuh0')
