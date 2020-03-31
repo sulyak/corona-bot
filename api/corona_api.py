@@ -1,4 +1,3 @@
-import json
 import requests
 
 URL = "https://corona.lmao.ninja/"
