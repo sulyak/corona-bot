@@ -1,50 +1,39 @@
+import json
 import requests
-from lxml import html
 
-URL = "https://www.worldometers.info/coronavirus/"
-COUNTER_XPATH = "//*[@id='maincounter-wrap']/div/span/text()"
+URL = "https://corona.lmao.ninja/"
 
-class CoronaCounter:
-    def __init__(self, tuple_data):
-        self.cases = tuple_data[0]
-        self.deaths = tuple_data[1]
-        self.recovered = tuple_data[2]
-        self.all_data = tuple(tuple_data)
+def counter_from_region(region: str=""):
+    """Get the counter from specific regeion.
+    `param region`: the specif region as str\n
+    `Return Value`: A Json Response Content with data from the requested region
 
-def counter_from_country(country: str=None):
-    """Get the counter from specific country.
-    `param country`: the specif country as str\n
-    `Return Value`: A Counter object
-
-    If no param were given, the worldwide counter will be returned.\n
-    An exception will be raise if the given country does not exist
+    If no param were given, the worldwide data will be returned.\n
+    An exception will be raise if the given region does not exist
     """
 
-    # check if country was given as argument
-    if country:
-        country_url = URL + "/country/" + country
+    # check if region was given as argument
+    if region:
+        region_url = URL + "countries/" + region
     else:
-        country_url = URL
+        region_url = URL + "all/"
 
-    # load the page tree
-    page = requests.get(country_url)
-    html_tree = html.fromstring(page.content)
+    # get request data as dict
+    response = requests.get(region_url).json()
 
-    # assert that country exist
-    if html_tree.find(".//title").text == "404 Not Found":
-        raise NameError("Country \'%s\' not recorded" % country)
+    # assert that region exist
+    if 'message' in response:
+        raise NameError(response['message'])
 
-    data = html_tree.xpath(COUNTER_XPATH)
-    return CoronaCounter(data)
+    return response
 
-def does_country_exist(country: str):
-    country_url = URL + "/country/" + country
-    page = requests.get(country_url)
-    html_tree = html.fromstring(page.content)
-    return html_tree.find(".//title").text != "404 Not Found"
+def does_region_exist(region: str):
+    region_url = URL + "countries/" + region
+    response = requests.get(region_url).json()
+    
+    return 'message' not in response
 
 def main():
-    import sys
-    print(counter_from_country(sys.argv[1]).cases)
+    print(counter_from_region())
 
 if __name__ == "__main__": main()
